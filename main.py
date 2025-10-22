@@ -41,7 +41,7 @@ def main():
         # 'llama2-70b-4096' is a high-performance, free-tier model on the GROQ platform.
         llm = ChatGroq(
             temperature=0, 
-            model_name="llama2-70b-4096"
+            model_name="openai/gpt-oss-120b"
         )
         
         # Use the cached function to create the agent
