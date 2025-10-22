@@ -55,7 +55,7 @@ st.sidebar.header("Settings")
 model_choice = st.sidebar.selectbox(
     "Select Groq model (suggested)",
     options=[
-        "gpt-oss-120B",
+        "openai/gpt-oss-120b",
         "mixtral-8x7b-32768",
         "llama3-8b",
         "compound-beta",
