@@ -1,109 +1,65 @@
-import os
+from langchain_experimental.agents import create_csv_agent
+from langchain_groq import ChatGroq
 from dotenv import load_dotenv
+import os
 import streamlit as st
 
-# --- FIX: LangChain AgentType Import ---
-# The correct import path for LangChain components after recent refactoring.
-# If this still fails, the fallback is to use 'from langchain.agents import AgentType'
-# or check the specific LangChain version used. We'll use the most likely modern path.
-from langchain.agents.agent_types import AgentType
-
-# 1. Groq and LangChain Imports
-from langchain_groq import ChatGroq
-# The CSV agent is now in the experimental package
-from langchain_experimental.agents.agent_toolkits import create_csv_agent
-
-
-# Use Streamlit's cache decorator to ensure the agent is only created once,
-# which speeds up the application significantly.
-# We include the uploaded_file.id to ensure the cache is invalidated when a new file is uploaded
-@st.cache_resource
-def get_agent_executor(llm_model, uploaded_file):
-    """Creates and returns the LangChain CSV AgentExecutor using Groq."""
-    
-    # create_csv_agent handles reading the CSV into a pandas DataFrame and setting up the agent.
-    # We use AgentType.ZERO_SHOT_REACT_DESCRIPTION as it's a robust default for Groq.
-    return create_csv_agent(
-        llm_model, 
-        uploaded_file, 
-        verbose=True,
-        agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    )
+# We are using the experimental library for create_csv_agent, 
+# and ChatGroq for the high-speed Groq models.
 
 def main():
-    # Load environment variables (for GROQ_API_KEY)
     load_dotenv()
 
-    # --- Setup and API Key Check ---
-    st.set_page_config(page_title="Ask your CSV (Groq Edition)", layout="centered")
-    
-    st.title("Ask your CSV")
-    st.markdown("📈 Powered by **Groq**'s high-speed LLMs for lightning-fast data analysis.")
-
-    # Check for the GROQ API Key
-    if not os.getenv("GROQ_API_KEY"):
-        st.error("GROQ_API_KEY is not set. Please set it in your environment or a `.env` file.")
+    # Load the Groq API key from the environment variable (replaces OpenAI key check)
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if groq_api_key is None or groq_api_key == "":
+        st.error("GROQ_API_KEY environment variable is not set. Please set it to run this application.")
         return
-    
-    # --- File Upload ---
-    csv_file = st.file_uploader("Upload a CSV file to begin analysis", type="csv")
+    else:
+        # The print statement is kept from the original style for local debug visibility
+        print("GROQ_API_KEY is set") 
+
+    st.set_page_config(page_title="Ask your CSV")
+    # Updated header to reflect the new LLM backend
+    st.header("Ask your CSV 📈 (Powered by Groq)")
+
+    csv_file = st.file_uploader("Upload a CSV file", type="csv")
     
     if csv_file is not None:
-        
-        # 1. Instantiate the Groq LLM
-        llm = ChatGroq(
-            temperature=0, 
-            # Llama 3 8B is an excellent, fast model for tool/agent use cases
-            model_name="llama3-8b-8192" 
-        )
-        
-        # 2. Get the Agent Executor
         try:
-            # We pass the file's ID to ensure the cache is unique per file upload
-            agent_executor = get_agent_executor(llm, csv_file, csv_file.id)
+            # 1. Instantiate the Groq model
+            # Use a fast Groq model like Mixtral 8x7b
+            llm = ChatGroq(
+                temperature=0, 
+                model_name="mixtral-8x7b-32768"
+            )
+
+            # 2. Create the CSV Agent using the modern LangChain experimental package
+            # We use 'openai-tools' as the agent_type for models that support function calling (like Groq's models).
+            agent = create_csv_agent(
+                llm,
+                csv_file,
+                verbose=True,
+                # Setting agent_type is highly recommended for modern chat models
+                agent_type="openai-tools" 
+            )
+            
+            # The agent is now an AgentExecutor instance.
+
+            user_question = st.text_input("Ask a question about your CSV: ")
+    
+            if user_question:
+                with st.spinner(text="Groq is thinking..."):
+                    # 3. Invoke the agent
+                    # AgentExecutor's invoke returns a dictionary, so we access the 'output' key for the final answer.
+                    response = agent.invoke({"input": user_question})
+                    st.write(response["output"])
+                    
         except Exception as e:
-            st.error(f"Error creating agent. Please ensure your CSV is correctly formatted. Details: {e}")
-            return
-        
-        # --- Chat Interface Setup ---
-        # Initialize chat history
-        if "messages" not in st.session_state:
-            st.session_state.messages = []
-
-        # Display chat messages from history on app rerun
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-
-        # --- User Input and Agent Invocation ---
-        user_question = st.chat_input("Ask a question about the data (e.g., 'What is the average age?', 'Show me the top 5 rows')")
-
-        if user_question:
-            # Display user message in chat
-            st.session_state.messages.append({"role": "user", "content": user_question})
-            with st.chat_message("user"):
-                st.markdown(user_question)
-
-            # Get and display assistant response
-            with st.chat_message("assistant"):
-                with st.spinner(text="Talking to Groq... Analyzing the data..."):
-                    try:
-                        # Invoke the agent executor
-                        # The agent executes the necessary Python code against the DataFrame
-                        response = agent_executor.invoke({"input": user_question})
-                        output_text = response["output"]
-                        st.markdown(output_text)
-                        
-                        # Save assistant response to history
-                        st.session_state.messages.append({"role": "assistant", "content": output_text})
-                        
-                    except Exception as e:
-                        # Display a user-friendly error
-                        error_message = f"An error occurred during analysis. Please check your CSV format or try rephrasing the question. Details: {e}"
-                        st.error(error_message)
-                        st.session_state.messages.append({"role": "assistant", "content": error_message})
+            st.error(f"An error occurred during agent execution: {e}")
+            st.info("Please verify the CSV file is valid and your question is clear. Also, check the Groq API key.")
 
 
 if __name__ == "__main__":
-        main()
+    main()
 
