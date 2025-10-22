@@ -38,9 +38,11 @@ def main():
             # We use 'openai-tools' as the agent_type for models that support function calling (like Groq's models).
             agent = create_agent(
                 llm,
-                csv_file,
-            agent.verbose=True,
-                # Setting agent_type is highly recommended for modern chat models
+                csv_file)
+            agent.verbose=True      
+
+
+# Setting agent_type is highly recommended for modern chat models
                 agent_type="openai-tools" 
             )
             
