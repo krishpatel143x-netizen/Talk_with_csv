@@ -1,0 +1,16 @@
+[server]
+headless = true
+port = 8501
+enableCORS = false
+enableXsrfProtection = true
+fileWatcherType = "poll"
+
+[theme]
+primaryColor = "#00b4d8"
+backgroundColor = "#0e1117"
+secondaryBackgroundColor = "#1c1f26"
+textColor = "#fafafa"
+font = "monospace"
+
+[browser]
+gatherUsageStats = false
