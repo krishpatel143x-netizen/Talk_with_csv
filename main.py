@@ -2,27 +2,30 @@ import os
 from dotenv import load_dotenv
 import streamlit as st
 
-# **FINAL FIX**: Use the correct experimental package path
-from langchain_experimental.agents.agent_toolkits import create_csv_agent
+# 1. NEW IMPORT: Use the correct LangChain Groq integration
 from langchain_groq import ChatGroq
 
-# ==============================================================================
-# OPTIMIZATION: CACHE AGENT CREATION
-# ==============================================================================
+# 2. NEW IMPORT: The CSV Agent has moved to the experimental package
+# This resolves previous import errors
+from langchain_experimental.agents.agent_toolkits import create_csv_agent
+
+
+# Use Streamlit's cache to only create the agent once for better performance
 @st.cache_resource
-def get_agent(llm_model, uploaded_file):
-    """Creates and returns the LangChain CSV Agent."""
-    # We use a context manager on the file to ensure proper handling by the LangChain tool
+def get_agent_executor(llm_model, uploaded_file):
+    """Creates and returns the LangChain CSV AgentExecutor."""
+    # The function name is updated from the deprecated 'create_agent' 
+    # to the correct 'create_csv_agent' for CSV files.
     return create_csv_agent(
         llm_model, 
-        uploaded_file, # Pass the Streamlit UploadedFile object
+        uploaded_file, 
         verbose=True
     )
 
 def main():
     load_dotenv()
 
-    # Check for the GROQ API Key
+    # 3. API KEY CHECK: Check for the GROQ API Key
     if os.getenv("GROQ_API_KEY") is None or os.getenv("GROQ_API_KEY") == "":
         st.error("GROQ_API_KEY is not set. Please set it as a Streamlit Secret or in your .env file.")
         return
@@ -34,17 +37,17 @@ def main():
     
     if csv_file is not None:
         
-        # Initialize the GROQ LLM (Using a fast Llama model)
+        # 4. LLM INSTANTIATION: Use ChatGroq instead of OpenAI
         llm = ChatGroq(
             temperature=0, 
+            # Llama 3 8B is a fast and capable Groq model for this task
             model_name="llama3-8b-8192" 
         )
         
-        # Use the cached function to create the agent executor
-        # This will handle the error from the Groq API due to the robust structure
-        agent_executor = get_agent(llm, csv_file)
+        # Create the agent executor
+        agent_executor = get_agent_executor(llm, csv_file)
         
-        # Initialize chat history in session state
+        # Initialize chat history for a better user experience
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
@@ -53,7 +56,7 @@ def main():
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        # User input logic
+        # User input logic (using the modern st.chat_input)
         user_question = st.chat_input("Ask a question about your CSV:")
 
         if user_question:
@@ -67,8 +70,7 @@ def main():
                 with st.spinner(text="Talking to GROQ..."):
                     try:
                         # Invoke the agent executor
-                        # The input to invoke is just the string for this type of agent
-                        response = agent_executor.invoke(user_question)
+                        response = agent_executor.invoke({"input": user_question})
                         output_text = response["output"]
                         st.markdown(output_text)
                         
@@ -76,8 +78,10 @@ def main():
                         st.session_state.messages.append({"role": "assistant", "content": output_text})
                         
                     except Exception as e:
-                        st.error(f"An error occurred: {e}")
-                        st.session_state.messages.append({"role": "assistant", "content": f"Sorry, I ran into an error: {e}"})
+                        error_message = f"An error occurred: {e}"
+                        st.error(error_message)
+                        st.session_state.messages.append({"role": "assistant", "content": error_message})
+
 
 if __name__ == "__main__":
         main()
