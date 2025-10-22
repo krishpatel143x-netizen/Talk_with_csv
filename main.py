@@ -1,4 +1,4 @@
-from langchain_agents import create_agent
+from langchain.agents import create_agent
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
 import os
