@@ -2,8 +2,15 @@ import os
 from dotenv import load_dotenv
 import streamlit as st
 
-# **Crucial Change**: Use the specific CSV agent function
-from langchain_community.agent_toolkits import create_csv_agent
+# ==============================================================================
+# FIX 1: Corrected Import Path
+# 'create_csv_agent' has been moved to 'langchain_experimental.agents.agent_toolkits'
+# ==============================================================================
+try:
+    from langchain_experimental.agents.agent_toolkits import create_csv_agent
+except ImportError:
+    # Fallback for older versions, though this is less likely to be needed now
+    from langchain_community.agent_toolkits import create_csv_agent
 
 # Use the ChatGroq model
 from langchain_groq import ChatGroq
@@ -41,10 +48,14 @@ def main():
     if csv_file is not None:
         
         # Initialize the GROQ LLM
-        # Groq is initialized with the fast and powerful Llama3 model.
+        # Groq is initialized with a fast and powerful Llama3 model.
+        # ==============================================================================
+        # FIX 2: Corrected Model Name
+        # Replaced "openai/gpt-oss-120b" with a valid Groq model name for ChatGroq
+        # ==============================================================================
         llm = ChatGroq(
             temperature=0, 
-            model_name="openai/gpt-oss-120b" 
+            model_name="llama3-8b-8192" 
         )
         
         # Use the cached function to create the agent
