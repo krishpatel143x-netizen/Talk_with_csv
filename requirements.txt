@@ -4,3 +4,4 @@ langchain
 langchain-groq
 pandas
 langchain-community
+langchain-experimental
