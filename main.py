@@ -43,7 +43,7 @@ def main():
 
 
 # Setting agent_type is highly recommended for modern chat models
-                agent_type="openai-tools" 
+            agent_type="openai-tools" 
             )
             
             # The agent is now an AgentExecutor instance.
