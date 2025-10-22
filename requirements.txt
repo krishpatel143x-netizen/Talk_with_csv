@@ -3,5 +3,5 @@ python-dotenv
 langchain
 langchain-groq
 pandas
-**langchain-experimental**
+langchain-experimental
 
