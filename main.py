@@ -7,7 +7,7 @@ from langchain_groq import ChatGroq
 
 # 2. NEW IMPORT: The CSV Agent has moved to the experimental package
 # This resolves previous import errors
-from langchain_experimental.agents.agent_toolkits import create_csv_agent
+from langchain_agent_toolkits import create_agent
 
 
 # Use Streamlit's cache to only create the agent once for better performance
