@@ -1,8 +1,9 @@
-streamlit
-langchain
+streamlit>=1.25
+pandas
+langchain>=0.0.350
 langchain-groq
 langchain-experimental
-langchain-core
+groq    # optional: if you plan to use groq sdk directly
+faiss-cpu  # or faiss (for vectorstore) — pick faiss-cpu for most setups
+openai  # required if using OpenAI embeddings
 python-dotenv
-pandas
-agent
