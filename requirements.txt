@@ -5,3 +5,4 @@ langchain-experimental
 langchain-core
 python-dotenv
 pandas
+agent
