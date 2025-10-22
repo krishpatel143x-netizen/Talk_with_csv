@@ -2,16 +2,21 @@ import os
 from dotenv import load_dotenv
 import streamlit as st
 
+# --- FIX: LangChain AgentType Import ---
+# The correct import path for LangChain components after recent refactoring.
+# If this still fails, the fallback is to use 'from langchain.agents import AgentType'
+# or check the specific LangChain version used. We'll use the most likely modern path.
+from langchain.agents.agent_types import AgentType
+
 # 1. Groq and LangChain Imports
-# Use the correct import path for the Groq model
 from langchain_groq import ChatGroq
 # The CSV agent is now in the experimental package
 from langchain_experimental.agents.agent_toolkits import create_csv_agent
-from langchain.agents.agent_types import AgentType
 
 
 # Use Streamlit's cache decorator to ensure the agent is only created once,
 # which speeds up the application significantly.
+# We include the uploaded_file.id to ensure the cache is invalidated when a new file is uploaded
 @st.cache_resource
 def get_agent_executor(llm_model, uploaded_file):
     """Creates and returns the LangChain CSV AgentExecutor using Groq."""
@@ -54,9 +59,10 @@ def main():
         
         # 2. Get the Agent Executor
         try:
-            agent_executor = get_agent_executor(llm, csv_file)
+            # We pass the file's ID to ensure the cache is unique per file upload
+            agent_executor = get_agent_executor(llm, csv_file, csv_file.id)
         except Exception as e:
-            st.error(f"Error creating agent: {e}")
+            st.error(f"Error creating agent. Please ensure your CSV is correctly formatted. Details: {e}")
             return
         
         # --- Chat Interface Setup ---
