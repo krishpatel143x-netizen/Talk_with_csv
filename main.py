@@ -39,7 +39,7 @@ def main():
             agent = create_agent(
                 llm,
                 csv_file,
-                verbose=True,
+            agent=verbose=True,
                 # Setting agent_type is highly recommended for modern chat models
                 agent_type="openai-tools" 
             )
