@@ -37,7 +37,7 @@ def main():
 
             # 2. Create the CSV Agent using the modern LangChain experimental package
             # We use 'openai-tools' as the agent_type for models that support function calling (like Groq's models).
-            agent = create_agent(
+            agent = create_csv_agent(
                 llm,
                 csv_file)
             agent.verbose=True      
