@@ -3,6 +3,7 @@ import os
 import io
 import pandas as pd
 import streamlit as st
+from groq import Groq
 
 # LangChain + Groq imports
 try:
